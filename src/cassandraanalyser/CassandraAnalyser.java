@@ -34,32 +34,36 @@ public class CassandraAnalyser {
             "rentID text," +
             "expDate text" +
             ");";*/
-        String ref = "";
-        String comp = "";
-        if(ref.contains("CREATE TABLE")&&comp.contains("CREATE TABLE")){
-            CassandraTable refTable = new CassandraTable();
-            CassandraTable compTable = new CassandraTable();
-            refTable.setName(ref);
-            refTable.setColumns(ref);
-            compTable.setName(comp);
-            compTable.setColumns(comp);
-            compareTables(refTable, compTable);
-        } else if ((ref.contains("CREATE INDEX")||
-                ref.contains("CREATE CUSTOM INDEX"))&&
-                (comp.contains("CREATE INDEX")||
-                comp.contains("CREATE CUSTOM INDEX"))) {
-            CassandraIndex refIndex = new CassandraIndex();
-            CassandraIndex compIndex = new CassandraIndex();
-            refIndex.setName(ref);
-            refIndex.setTableName(ref);
-            refIndex.setIdentifier(ref);
-            compIndex.setName(comp);
-            compIndex.setTableName(comp);
-            compIndex.setIdentifier(comp);
-            compareIndexes(refIndex, compIndex);
+        if(args==null||args.length<2){
+            System.out.println("Zbyt mała liość argumentów");
         } else {
-            System.out.println("Do that");
-        }
+            String ref = args[0];
+            String comp = args[1];
+            if(ref.contains("CREATE TABLE")&&comp.contains("CREATE TABLE")){
+                CassandraTable refTable = new CassandraTable();
+                CassandraTable compTable = new CassandraTable();
+                refTable.setName(ref);
+                refTable.setColumns(ref);
+                compTable.setName(comp);
+                compTable.setColumns(comp);
+                compareTables(refTable, compTable);
+            } else if ((ref.contains("CREATE INDEX")||
+                    ref.contains("CREATE CUSTOM INDEX"))&&
+                    (comp.contains("CREATE INDEX")||
+                    comp.contains("CREATE CUSTOM INDEX"))) {
+                CassandraIndex refIndex = new CassandraIndex();
+                CassandraIndex compIndex = new CassandraIndex();
+                refIndex.setName(ref);
+                refIndex.setTableName(ref);
+                refIndex.setIdentifier(ref);
+                compIndex.setName(comp);
+                compIndex.setTableName(comp);
+                compIndex.setIdentifier(comp);
+                compareIndexes(refIndex, compIndex);
+            } else {
+                System.out.println("Do that");
+            }
+        } 
     }
     
     private static void compareTables(CassandraTable ref,CassandraTable comp) {
