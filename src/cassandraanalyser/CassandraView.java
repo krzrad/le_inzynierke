@@ -18,12 +18,11 @@ public class CassandraView {
     }
     
     void setStatement(String input){
-        /*String[] inputSplit = input.split(" ");
-        statement = inputSplit[3];*/
+        statement = input.substring(input.indexOf("SELECT"),input.indexOf("PRIMARY")).trim();
     }
     
-    void setPrimaryKey(String input){
-        /*String[] inputSplit = input.split(" ");
-        primaryKey = inputSplit[3];*/
+    void setPrimaryKey(String input){;
+        String byproduct = input.substring(input.indexOf("PRIMARY"));
+        primaryKey = byproduct.substring(byproduct.indexOf("(")+1,byproduct.indexOf(")"));
     }
 }

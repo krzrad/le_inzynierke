@@ -45,7 +45,7 @@ public class CassandraTableTest {
      */
     @Test
     public void testSetName() {
-        String input = "CREATE TABLE table1 (a text,b int,c float);";
+        String input = "CREATE TABLE table1 (a text PRIMARYKEY,b int,c float);";
         CassandraTable instance = new CassandraTable();
         instance.setName(input);
         assertEquals("nazwa tabeli źle ustawiona","table1", instance.name);
@@ -56,11 +56,25 @@ public class CassandraTableTest {
      */
     @Test
     public void testSetColumns() {
-        String input = "CREATE TABLE table1 (a text,b int,c float);";
+        String input = "CREATE TABLE table1 (a text PRIMARYKEY,b int,c float);";
         CassandraTable instance = new CassandraTable();
         instance.setColumns(input);
         List<CassandraColumn> expResult = new ArrayList<>();
-        assertEquals("nie ustawiono kolumn","table1", instance.columns); //jak porównać kolumny w teście
+        CassandraColumn a,b,c;
+        a = new CassandraColumn();
+        a.name="a";
+        a.type="text";
+        a.properties="PRIMARYKEY";
+        expResult.add(a);
+        b = new CassandraColumn();
+        b.name="b";
+        b.type="int";
+        expResult.add(b);
+        c = new CassandraColumn();
+        c.name="c";
+        c.type="float";
+        expResult.add(c);
+        assertEquals("nie ustawiono kolumn",expResult, instance.columns); //jak dokonać assercji obiektów
     }
     
 }

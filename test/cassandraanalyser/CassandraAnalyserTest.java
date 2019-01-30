@@ -42,7 +42,22 @@ public class CassandraAnalyserTest {
      */
     @Test
     public void testMain() {
-        String[] args = null;
+        String[] args = new String[2];
+        args[0] = "CREATE TABLE table1 (\n"
+                + "moviename text PRIMARYKEY,\n"
+                + "rentID int);\n"
+                + "\n"
+                + "CREATE TABLE table2 (\n"
+                + "uid int PRIMARYKEY,\n"
+                + "password text);";
+        args[1] = "CREATE TABLE table1 (\n"
+                + "moviename text PRIMARYKEY,\n"
+                + "rentID int,\n"
+                + "expDate text);\n"
+                + "\n"
+                + "CREATE TABLE table3 (\n"
+                + "id text PRIMARYKEY,\n"
+                + "highScore int);";
         CassandraAnalyser.main(args);
     }
     

@@ -19,50 +19,107 @@ public class CassandraAnalyser {
      */
       
     public static void main(String[] args) {
-        /*if(args[2]!=null&&(args[2].equals("--diff")||args[2].equals("-d"))){
-            System.out.println("Do this");
-        } else {
-            System.out.println("Do that");
-        }
-        String ref = "CREATE TABLE przyklad1 (" +
-            "moviename text PRMIARYKEY," +
-            "rentID int," +
-            "smh int"+
-            ");";
-        String comp = "CREATE TABLE przyklad2 (" +
-            "moviename text PRMIARYKEY," +
-            "rentID text," +
-            "expDate text" +
-            ");";*/
         if(args==null||args.length<2){
             System.out.println("Zbyt mała liość argumentów");
         } else {
-            String ref = args[0];
-            String comp = args[1];
-            if(ref.contains("CREATE TABLE")&&comp.contains("CREATE TABLE")){
-                CassandraTable refTable = new CassandraTable();
-                CassandraTable compTable = new CassandraTable();
-                refTable.setName(ref);
-                refTable.setColumns(ref);
-                compTable.setName(comp);
-                compTable.setColumns(comp);
-                compareTables(refTable, compTable);
-            } else if ((ref.contains("CREATE INDEX")||
-                    ref.contains("CREATE CUSTOM INDEX"))&&
-                    (comp.contains("CREATE INDEX")||
-                    comp.contains("CREATE CUSTOM INDEX"))) {
-                CassandraIndex refIndex = new CassandraIndex();
-                CassandraIndex compIndex = new CassandraIndex();
-                refIndex.setName(ref);
-                refIndex.setTableName(ref);
-                refIndex.setIdentifier(ref);
-                compIndex.setName(comp);
-                compIndex.setTableName(comp);
-                compIndex.setIdentifier(comp);
-                compareIndexes(refIndex, compIndex);
-            } else {
-                System.out.println("Do that");
+            String ref = prepareSnapshot(args[0]);
+            String comp = prepareSnapshot(args[1]);
+            String[] refContents = ref.split("\n");
+            String[] compContents = comp.split("\n");
+            List<CassandraTable> refTables,compTables;
+            List<CassandraIndex> refIndexes,compIndexes;
+            List<CassandraView> refViews,compViews;
+            List<CassandraTrigger> refTriggers,compTriggers;
+            refTables = new ArrayList<>();
+            refIndexes = new ArrayList<>();
+            refViews = new ArrayList<>();
+            refTriggers = new ArrayList<>();
+            for (int r=0;r<refContents.length;r++){
+                if(refContents[r].contains("CREATE TABLE")){
+                    CassandraTable refTable = new CassandraTable();
+                    refTable.setName(refContents[r]);
+                    refTable.setColumns(refContents[r]);
+                    refTables.add(refTable);
+                } else if ((refContents[r].contains("CREATE INDEX")||
+                            refContents[r].contains("CREATE CUSTOM INDEX"))){
+                    CassandraIndex refIndex = new CassandraIndex();
+                    refIndex.setName(refContents[r]);
+                    refIndex.setTableName(refContents[r]);
+                    refIndex.setIdentifier(refContents[r]);
+                    refIndexes.add(refIndex);
+                } else if (refContents[r].contains("CREATE MATERALIZED VIEW")){
+                    CassandraView refView = new CassandraView();
+                    refView.setName(refContents[r]);
+                    refView.setStatement(refContents[r]);
+                    refView.setPrimaryKey(refContents[r]);
+                    refViews.add(refView);
+                } else if (refContents[r].contains("CREATE TRIGGER")){
+                    CassandraTrigger refTrigger = new CassandraTrigger();
+                    refTrigger.setName(refContents[r]);
+                    refTrigger.setTable(refContents[r]);
+                    refTrigger.setLogicFile(refContents[r]);
+                    refTriggers.add(refTrigger);
+                }
             }
+            compTables = new ArrayList<>();
+            compIndexes = new ArrayList<>();
+            compViews = new ArrayList<>();
+            compTriggers = new ArrayList<>();
+            for (int c=0;c<compContents.length;c++){
+                if(compContents[c].contains("CREATE TABLE")){
+                    CassandraTable compTable = new CassandraTable();
+                    compTable.setName(compContents[c]);
+                    compTable.setColumns(compContents[c]);
+                    compTables.add(compTable);
+                } else if ((compContents[c].contains("CREATE INDEX")||
+                            compContents[c].contains("CREATE CUSTOM INDEX"))){
+                    CassandraIndex compIndex = new CassandraIndex();
+                    compIndex.setName(compContents[c]);
+                    compIndex.setTableName(compContents[c]);
+                    compIndex.setIdentifier(compContents[c]);
+                    compIndexes.add(compIndex);
+                } else if (compContents[c].contains("CREATE MATERALIZED VIEW")){
+                    CassandraView compView = new CassandraView();
+                    compView.setName(compContents[c]);
+                    compView.setStatement(compContents[c]);
+                    compView.setPrimaryKey(compContents[c]);
+                    compViews.add(compView);
+                } else if (compContents[c].contains("CREATE TRIGGER")){
+                    CassandraTrigger compTrigger = new CassandraTrigger();
+                    compTrigger.setName(compContents[c]);
+                    compTrigger.setTable(compContents[c]);
+                    compTrigger.setLogicFile(compContents[c]);
+                    compTriggers.add(compTrigger);
+                }
+            }
+            /*for(int r=0;r<refContents.length;r++){
+                for(int c=0;c<compContents.length;c++){
+                    if(refContents[r].contains("CREATE TABLE")&&compContents[c].contains("CREATE TABLE")){
+                        CassandraTable refTable = new CassandraTable();
+                        CassandraTable compTable = new CassandraTable();
+                        refTable.setName(refContents[r]);
+                        refTable.setColumns(refContents[r]);
+                        compTable.setName(compContents[c]);
+                        compTable.setColumns(compContents[c]);
+                        compareTables(refTable, compTable);
+                    } else if ((refContents[r].contains("CREATE INDEX")||
+                            refContents[r].contains("CREATE CUSTOM INDEX"))&&
+                            (compContents[c].contains("CREATE INDEX")||
+                            compContents[c].contains("CREATE CUSTOM INDEX"))) {
+                        CassandraIndex refIndex = new CassandraIndex();
+                        CassandraIndex compIndex = new CassandraIndex();
+                        refIndex.setName(refContents[r]);
+                        refIndex.setTableName(refContents[r]);
+                        refIndex.setIdentifier(refContents[r]);
+                        compIndex.setName(compContents[c]);
+                        compIndex.setTableName(compContents[c]);
+                        compIndex.setIdentifier(compContents[c]);
+                        compareIndexes(refIndex, compIndex);
+                    } else {
+                        System.out.println("Do that");
+                    }
+                }
+            }*/
         } 
     }
     
@@ -138,5 +195,11 @@ public class CassandraAnalyser {
         } else for (int c=0;c<changed.size();c++){
             System.out.print("\n\t"+changed.get(c));
         }
+    }
+
+    private static String prepareSnapshot(String source) {
+        String prepared = source.replace("\n", "").replace(";", ";\n");
+        System.out.println(prepared);
+        return prepared;
     }
 }
