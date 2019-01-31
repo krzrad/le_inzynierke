@@ -26,7 +26,7 @@ public class CassandraIndex {
         String preparedInput = prepare(input);
         String[] splitInput = preparedInput.split(" ");
         if(splitInput[0].equals("ON")){
-            name = null;
+            name = "unnamed";
         }else
             name = splitInput[0];
     };

@@ -34,30 +34,29 @@ public class CassandraAnalyser {
             refIndexes = new ArrayList<>();
             refViews = new ArrayList<>();
             refTriggers = new ArrayList<>();
-            for (int r=0;r<refContents.length;r++){
-                if(refContents[r].contains("CREATE TABLE")){
+            for (String refContent : refContents) {
+                if (refContent.contains("CREATE TABLE")) {
                     CassandraTable refTable = new CassandraTable();
-                    refTable.setName(refContents[r]);
-                    refTable.setColumns(refContents[r]);
+                    refTable.setName(refContent);
+                    refTable.setColumns(refContent);
                     refTables.add(refTable);
-                } else if ((refContents[r].contains("CREATE INDEX")||
-                            refContents[r].contains("CREATE CUSTOM INDEX"))){
+                } else if (refContent.contains("CREATE INDEX") || refContent.contains("CREATE CUSTOM INDEX")) {
                     CassandraIndex refIndex = new CassandraIndex();
-                    refIndex.setName(refContents[r]);
-                    refIndex.setTableName(refContents[r]);
-                    refIndex.setIdentifier(refContents[r]);
+                    refIndex.setName(refContent);
+                    refIndex.setTableName(refContent);
+                    refIndex.setIdentifier(refContent);
                     refIndexes.add(refIndex);
-                } else if (refContents[r].contains("CREATE MATERALIZED VIEW")){
+                } else if (refContent.contains("CREATE MATERALIZED VIEW")) {
                     CassandraView refView = new CassandraView();
-                    refView.setName(refContents[r]);
-                    refView.setStatement(refContents[r]);
-                    refView.setPrimaryKey(refContents[r]);
+                    refView.setName(refContent);
+                    refView.setStatement(refContent);
+                    refView.setPrimaryKey(refContent);
                     refViews.add(refView);
-                } else if (refContents[r].contains("CREATE TRIGGER")){
+                } else if (refContent.contains("CREATE TRIGGER")) {
                     CassandraTrigger refTrigger = new CassandraTrigger();
-                    refTrigger.setName(refContents[r]);
-                    refTrigger.setTable(refContents[r]);
-                    refTrigger.setLogicFile(refContents[r]);
+                    refTrigger.setName(refContent);
+                    refTrigger.setTable(refContent);
+                    refTrigger.setLogicFile(refContent);
                     refTriggers.add(refTrigger);
                 }
             }
@@ -65,74 +64,50 @@ public class CassandraAnalyser {
             compIndexes = new ArrayList<>();
             compViews = new ArrayList<>();
             compTriggers = new ArrayList<>();
-            for (int c=0;c<compContents.length;c++){
-                if(compContents[c].contains("CREATE TABLE")){
+            for (String compContent : compContents) {
+                if (compContent.contains("CREATE TABLE")) {
                     CassandraTable compTable = new CassandraTable();
-                    compTable.setName(compContents[c]);
-                    compTable.setColumns(compContents[c]);
+                    compTable.setName(compContent);
+                    compTable.setColumns(compContent);
                     compTables.add(compTable);
-                } else if ((compContents[c].contains("CREATE INDEX")||
-                            compContents[c].contains("CREATE CUSTOM INDEX"))){
+                } else if (compContent.contains("CREATE INDEX") || compContent.contains("CREATE CUSTOM INDEX")) {
                     CassandraIndex compIndex = new CassandraIndex();
-                    compIndex.setName(compContents[c]);
-                    compIndex.setTableName(compContents[c]);
-                    compIndex.setIdentifier(compContents[c]);
+                    compIndex.setName(compContent);
+                    compIndex.setTableName(compContent);
+                    compIndex.setIdentifier(compContent);
                     compIndexes.add(compIndex);
-                } else if (compContents[c].contains("CREATE MATERALIZED VIEW")){
+                } else if (compContent.contains("CREATE MATERALIZED VIEW")) {
                     CassandraView compView = new CassandraView();
-                    compView.setName(compContents[c]);
-                    compView.setStatement(compContents[c]);
-                    compView.setPrimaryKey(compContents[c]);
+                    compView.setName(compContent);
+                    compView.setStatement(compContent);
+                    compView.setPrimaryKey(compContent);
                     compViews.add(compView);
-                } else if (compContents[c].contains("CREATE TRIGGER")){
+                } else if (compContent.contains("CREATE TRIGGER")) {
                     CassandraTrigger compTrigger = new CassandraTrigger();
-                    compTrigger.setName(compContents[c]);
-                    compTrigger.setTable(compContents[c]);
-                    compTrigger.setLogicFile(compContents[c]);
+                    compTrigger.setName(compContent);
+                    compTrigger.setTable(compContent);
+                    compTrigger.setLogicFile(compContent);
                     compTriggers.add(compTrigger);
                 }
             }
-            /*for(int r=0;r<refContents.length;r++){
-                for(int c=0;c<compContents.length;c++){
-                    if(refContents[r].contains("CREATE TABLE")&&compContents[c].contains("CREATE TABLE")){
-                        CassandraTable refTable = new CassandraTable();
-                        CassandraTable compTable = new CassandraTable();
-                        refTable.setName(refContents[r]);
-                        refTable.setColumns(refContents[r]);
-                        compTable.setName(compContents[c]);
-                        compTable.setColumns(compContents[c]);
-                        compareTables(refTable, compTable);
-                    } else if ((refContents[r].contains("CREATE INDEX")||
-                            refContents[r].contains("CREATE CUSTOM INDEX"))&&
-                            (compContents[c].contains("CREATE INDEX")||
-                            compContents[c].contains("CREATE CUSTOM INDEX"))) {
-                        CassandraIndex refIndex = new CassandraIndex();
-                        CassandraIndex compIndex = new CassandraIndex();
-                        refIndex.setName(refContents[r]);
-                        refIndex.setTableName(refContents[r]);
-                        refIndex.setIdentifier(refContents[r]);
-                        compIndex.setName(compContents[c]);
-                        compIndex.setTableName(compContents[c]);
-                        compIndex.setIdentifier(compContents[c]);
-                        compareIndexes(refIndex, compIndex);
-                    } else {
-                        System.out.println("Do that");
-                    }
-                }
-            }*/
+            compareTables(refTables,compTables);
+            compareIndexes(refIndexes,compIndexes);
+            compareViews(refViews,compViews);
+            compareTriggers(refTriggers,compTriggers);
         } 
     }
     
-    private static void compareTables(CassandraTable ref,CassandraTable comp) {
+    private static void compareColumns(CassandraTable ref,CassandraTable comp) {
         List<String> fine,missing,unexcepted,changed;
         fine = new ArrayList<>();
         changed = new ArrayList<>();
         for(int a=0;a<ref.columns.size();a++){
-            for(int b=a;b<comp.columns.size();b++){
+            for(int b=0;b<comp.columns.size();b++){
                 if(ref.columns.get(a).name.equals(comp.columns.get(b).name)){
-                    fine.add(ref.columns.get(a).name);
+                    fine.add(comp.columns.get(b).name);
                     if(!(ref.columns.get(a).type.equals(comp.columns.get(b).type)))
                         changed.add(ref.name+"."+ref.columns.get(a).name+"\n\t\t typ zmieniony z "+ref.columns.get(a).type+" na "+comp.columns.get(b).type);
+                    b=comp.columns.size();
                 }
             }
         }
@@ -179,17 +154,166 @@ public class CassandraAnalyser {
         }
     }
 
-    private static void compareIndexes(CassandraIndex ref, CassandraIndex comp) {
-        List<String> changed = new ArrayList<>();
-        if(!(ref.tableName.equals(comp.tableName))){
-            changed.add(ref.name+": nazwa tabeli zmieniona z "+ref.tableName+
-                    " na "+comp.tableName);
+    private static String prepareSnapshot(String source) {
+        String prepared = source.replace("\n", "").replace(";", ";\n");
+        return prepared;
+    }
+
+    private static void compareTables(List<CassandraTable> refTables, List<CassandraTable> compTables) {
+        List<CassandraTable> fine, otherFine, missing, unexcepted;
+        fine = new ArrayList<>();
+        otherFine = new ArrayList<>();
+        missing = new ArrayList<>();
+        for(int r=0;r<refTables.size();r++){
+            for(int c=0;c<compTables.size();c++){
+                if(refTables.get(r).name.equals(compTables.get(c).name)){
+                    otherFine.add(refTables.get(r));
+                    fine.add(compTables.get(c));
+                    c=compTables.size();
+                } else if (c==compTables.size()-1) {
+                    missing.add(refTables.get(r));
+                }
+            }
         }
-        if(!(ref.identifier.equals(comp.identifier))){
-            changed.add(ref.name+": identyfikator zmieniony z "+ref.identifier+
-                    " na "+comp.identifier);
+        unexcepted = new ArrayList<>();
+        for(int c=0;c<compTables.size();c++){
+            for(int f=0;f<fine.size();f++){
+                if(compTables.get(c).name.equals(fine.get(f).name)){
+                    f=fine.size();
+                } else if (f==fine.size()-1) {
+                    unexcepted.add(compTables.get(c));
+                }
+            }
+        }
+        System.out.print("Brakujące tabele: ");
+        if(missing.isEmpty()){
+            System.out.println("BRAK");
+        } else {
+            for(int m=0;m<missing.size();m++)
+                System.out.println("\n\t"+missing.get(m).name);
+        }
+        System.out.print("Niespodziewane tabele: ");
+        if(unexcepted.isEmpty()){
+            System.out.println("BRAK");
+        } else {
+            for(int u=0;u<unexcepted.size();u++)
+                System.out.println("\n\t"+unexcepted.get(u).name);
+        }
+        for(int f=0;f<fine.size();f++)
+            compareColumns(otherFine.get(f), fine.get(f));
+    }
+
+    private static void compareIndexes(List<CassandraIndex> refIndexes, List<CassandraIndex> compIndexes) {
+        List<CassandraIndex> fine,otherFine,missing,unexcepted;
+        fine = new ArrayList<>();
+        otherFine = new ArrayList<>();
+        missing = new ArrayList<>();
+        for(int r=0;r<refIndexes.size();r++){
+            for(int c=0;c<compIndexes.size();c++){
+                if(refIndexes.get(r).name.equals(compIndexes.get(c).name)){
+                    otherFine.add(refIndexes.get(r));
+                    fine.add(compIndexes.get(c));
+                    c=compIndexes.size();
+                } else if(c==compIndexes.size()-1){
+                    missing.add(refIndexes.get(r));
+                }
+            }
+        }
+        unexcepted = new ArrayList<>();
+        for(int c=0;c<compIndexes.size();c++){
+            for(int f=0;f<fine.size();f++){
+                if(compIndexes.get(c).name.equals(fine.get(f).name)){
+                    f=fine.size();
+                } else if (f==fine.size()-1) {
+                    unexcepted.add(compIndexes.get(c));
+                }
+            }
+        }
+        List<String> changed = new ArrayList<>();
+        for(int f=0;f<fine.size();f++){
+            if(!(otherFine.get(f).tableName.equals(fine.get(f).tableName))){
+                changed.add(otherFine.get(f).name+": nazwa tabeli zmieniona z "+otherFine.get(f).tableName+
+                        " na "+fine.get(f).tableName);
+            }
+            if(!(otherFine.get(f).identifier.equals(fine.get(f).identifier))){
+                changed.add(otherFine.get(f).name+": identyfikator zmieniony z "+otherFine.get(f).identifier+
+                        " na "+fine.get(f).identifier);
+            }
+        }
+        System.out.print("Brakujące indeksy: ");
+        if(missing.isEmpty()){
+            System.out.println("BRAK");
+        } else {
+            for(int m=0;m<missing.size();m++)
+                System.out.println("\n\t"+missing.get(m).name);
+        }
+        System.out.print("Niespodziewane indeksy: ");
+        if(unexcepted.isEmpty()){
+            System.out.println("BRAK");
+        } else {
+            for(int u=0;u<unexcepted.size();u++)
+                System.out.println("\n\t"+unexcepted.get(u).name);
         }
         System.out.print("Zmiany w indeksach: ");
+        if(changed.isEmpty()){
+            System.out.println("BRAK");
+        } else for (int c=0;c<changed.size();c++){
+            System.out.println("\n\t"+changed.get(c));
+        }
+    }
+
+    private static void compareViews(List<CassandraView> refViews, List<CassandraView> compViews) {
+        List<CassandraView> fine,otherFine,missing,unexcepted;
+        fine = new ArrayList<>();
+        otherFine = new ArrayList<>();
+        missing = new ArrayList<>();
+        for(int r=0;r<refViews.size();r++){
+            for(int c=0;c<compViews.size();c++){
+                if(refViews.get(r).name.equals(compViews.get(c).name)){
+                    otherFine.add(refViews.get(r));
+                    fine.add(compViews.get(c));
+                    c=compViews.size();
+                } else if(c==compViews.size()-1){
+                    missing.add(refViews.get(r));
+                }
+            }
+        }
+        unexcepted = new ArrayList<>();
+        for(int c=0;c<compViews.size();c++){
+            for(int f=0;f<fine.size();f++){
+                if(compViews.get(c).name.equals(fine.get(f).name)){
+                    f=fine.size();
+                } else if (f==fine.size()-1) {
+                    unexcepted.add(compViews.get(c));
+                }
+            }
+        }
+        List<String> changed = new ArrayList<>();
+        for(int f=0;f<fine.size();f++){
+            if(!(otherFine.get(f).primaryKey.equals(fine.get(f).primaryKey))){
+                changed.add(otherFine.get(f).name+": klucz podstawowy zmieniony z "+otherFine.get(f).primaryKey+
+                        " na "+fine.get(f).primaryKey);
+            }
+            if(!(otherFine.get(f).statement.equals(fine.get(f).statement))){
+                changed.add(otherFine.get(f).name+": kwerenda zmieniona z "+otherFine.get(f).statement+
+                        " na "+fine.get(f).statement);
+            }
+        }
+        System.out.print("Brakujące perspektywy: ");
+        if(missing.isEmpty()){
+            System.out.println("BRAK");
+        } else {
+            for(int m=0;m<missing.size();m++)
+                System.out.println("\n\t"+missing.get(m).name);
+        }
+        System.out.print("Niespodziewane perspektywy: ");
+        if(unexcepted.isEmpty()){
+            System.out.println("BRAK");
+        } else {
+            for(int u=0;u<unexcepted.size();u++)
+                System.out.println("\n\t"+unexcepted.get(u).name);
+        }
+        System.out.print("Zmiany w perspektywach: ");
         if(changed.isEmpty()){
             System.out.println("BRAK");
         } else for (int c=0;c<changed.size();c++){
@@ -197,9 +321,62 @@ public class CassandraAnalyser {
         }
     }
 
-    private static String prepareSnapshot(String source) {
-        String prepared = source.replace("\n", "").replace(";", ";\n");
-        System.out.println(prepared);
-        return prepared;
+    private static void compareTriggers(List<CassandraTrigger> refTriggers, List<CassandraTrigger> compTriggers) {
+        List<CassandraTrigger> fine,otherFine,missing,unexcepted;
+        fine = new ArrayList<>();
+        otherFine = new ArrayList<>();
+        missing = new ArrayList<>();
+        for(int r=0;r<refTriggers.size();r++){
+            for(int c=0;c<compTriggers.size();c++){
+                if(refTriggers.get(r).name.equals(compTriggers.get(c).name)){
+                    otherFine.add(refTriggers.get(r));
+                    fine.add(compTriggers.get(c));
+                    c=compTriggers.size();
+                } else if(c==compTriggers.size()-1){
+                    missing.add(refTriggers.get(r));
+                }
+            }
+        }
+        unexcepted = new ArrayList<>();
+        for(int c=0;c<compTriggers.size();c++){
+            for(int f=0;f<fine.size();f++){
+                if(compTriggers.get(c).name.equals(fine.get(f).name)){
+                    f=fine.size();
+                } else if (f==fine.size()-1) {
+                    unexcepted.add(compTriggers.get(c));
+                }
+            }
+        }
+        List<String> changed = new ArrayList<>();
+        for(int f=0;f<fine.size();f++){
+            if(!(otherFine.get(f).table.equals(fine.get(f).table))){
+                changed.add(otherFine.get(f).name+": tabela zmieniona z "+otherFine.get(f).table+
+                        " na "+fine.get(f).table);
+            }
+            if(!(otherFine.get(f).logicFile.equals(fine.get(f).logicFile))){
+                changed.add(otherFine.get(f).name+": plik wyzwalacza z "+otherFine.get(f).logicFile+
+                        " na "+fine.get(f).logicFile);
+            }
+        }
+        System.out.print("Brakujące wyzwalacze: ");
+        if(missing.isEmpty()){
+            System.out.println("BRAK");
+        } else {
+            for(int m=0;m<missing.size();m++)
+                System.out.println("\n\t"+missing.get(m).name);
+        }
+        System.out.print("Niespodziewane wyzwalacze: ");
+        if(unexcepted.isEmpty()){
+            System.out.println("BRAK");
+        } else {
+            for(int u=0;u<unexcepted.size();u++)
+                System.out.println("\n\t"+unexcepted.get(u).name);
+        }
+        System.out.print("Zmiany w wyzwalaczach: ");
+        if(changed.isEmpty()){
+            System.out.println("BRAK");
+        } else for (int c=0;c<changed.size();c++){
+            System.out.print("\n\t"+changed.get(c));
+        }
     }
 }

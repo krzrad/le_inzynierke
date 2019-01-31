@@ -45,19 +45,26 @@ public class CassandraAnalyserTest {
         String[] args = new String[2];
         args[0] = "CREATE TABLE table1 (\n"
                 + "moviename text PRIMARYKEY,\n"
+                + "ticketPrice float,\n"
                 + "rentID int);\n"
                 + "\n"
                 + "CREATE TABLE table2 (\n"
                 + "uid int PRIMARYKEY,\n"
-                + "password text);";
+                + "password text);\n"
+                + "\n"
+                + "CREATE CUSTOM INDEX index1 ON table1 (moviename);\n"
+                + "CREATE INDEX index2 ON table2 (ticketPrice);";
         args[1] = "CREATE TABLE table1 (\n"
                 + "moviename text PRIMARYKEY,\n"
-                + "rentID int,\n"
+                + "rentID uuid,\n"
                 + "expDate text);\n"
                 + "\n"
                 + "CREATE TABLE table3 (\n"
                 + "id text PRIMARYKEY,\n"
-                + "highScore int);";
+                + "highScore int);\n"
+                + "\n"
+                + "CREATE CUSTOM INDEX index1 ON table1 (rentID);\n"
+                + "CREATE INDEX ON table3 (keys(highScore));";
         CassandraAnalyser.main(args);
     }
     
