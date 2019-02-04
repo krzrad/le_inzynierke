@@ -43,7 +43,9 @@ public class CassandraAnalyserTest {
     @Test
     public void testMain() {
         String[] args = new String[2];
-        args[0] = "CREATE TABLE table1 (\n"
+        args[0] = "--Database version: 3.0;\n"
+                + "\n"
+                + "CREATE TABLE table1 (\n"
                 + "moviename text PRIMARYKEY,\n"
                 + "ticketPrice float,\n"
                 + "rentID int);\n"
@@ -54,7 +56,9 @@ public class CassandraAnalyserTest {
                 + "\n"
                 + "CREATE CUSTOM INDEX index1 ON table1 (moviename);\n"
                 + "CREATE INDEX index2 ON table2 (ticketPrice);";
-        args[1] = "CREATE TABLE table1 (\n"
+        args[1] = "--Database version: 3.11;\n"
+                + "\n"
+                + "CREATE TABLE table1 (\n"
                 + "moviename text PRIMARYKEY,\n"
                 + "rentID uuid,\n"
                 + "expDate text);\n"

@@ -19,6 +19,9 @@ public class CassandraAnalyser {
      */
       
     public static void main(String[] args) {
+        String refVersion,compVersion;
+        refVersion = "";
+        compVersion = "";
         if(args==null||args.length<2){
             System.out.println("Zbyt mała liość argumentów");
         } else {
@@ -58,6 +61,8 @@ public class CassandraAnalyser {
                     refTrigger.setTable(refContent);
                     refTrigger.setLogicFile(refContent);
                     refTriggers.add(refTrigger);
+                } else if (refContent.contains("Database version")){
+                    refVersion = refContent.substring(refContent.indexOf(": "), refContent.indexOf(";")).replace(':', ' ').trim();
                 }
             }
             compTables = new ArrayList<>();
@@ -88,7 +93,15 @@ public class CassandraAnalyser {
                     compTrigger.setTable(compContent);
                     compTrigger.setLogicFile(compContent);
                     compTriggers.add(compTrigger);
+                } else if (compContent.contains("Database version")){
+                    compVersion = compContent.substring(compContent.indexOf(": "), compContent.indexOf(";")).replace(':', ' ').trim();
                 }
+            }
+            if(refVersion.equals(compVersion)){
+                System.out.println("Obie bazy są w wersji "+refVersion);
+            } else {
+                System.out.println("Wersja bazy referenycjnej: "+refVersion);
+                System.out.println("Wersja bazy porównywanej: "+compVersion);
             }
             compareTables(refTables,compTables);
             compareIndexes(refIndexes,compIndexes);
