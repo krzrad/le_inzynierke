@@ -7,6 +7,8 @@ package cassandraanalyser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -23,7 +25,7 @@ public class CassandraAnalyser {
         refVersion = "";
         compVersion = "";
         if(args==null||args.length<2){
-            System.out.println("Zbyt mała liość argumentów");
+            System.out.println("Zbyt mała ilość argumentów");
         } else {
             String ref = prepareSnapshot(args[0]);
             String comp = prepareSnapshot(args[1]);
@@ -37,31 +39,43 @@ public class CassandraAnalyser {
             refIndexes = new ArrayList<>();
             refViews = new ArrayList<>();
             refTriggers = new ArrayList<>();
+            Pattern tablePattern = Pattern.compile("\\bCREATE\\b\\s+\\bTABLE\\b",Pattern.CASE_INSENSITIVE);
+            Pattern indexPattern = Pattern.compile("\\bCREATE\\b\\s+\\bINDEX\\b|"
+                    + "\\bCREATE\\b\\s+\\bCUSTOM\\b\\s+\\bINDEX\\b",Pattern.CASE_INSENSITIVE);
+            Pattern viewPattern = Pattern.compile("\\bCREATE\\b\\s+\\bMATERIALIZED\\b\\s+\\bVIEW\\b",Pattern.CASE_INSENSITIVE);
+            Pattern triggerPattern = Pattern.compile("\\bCREATE\\b\\s+\\bTRIGGER\\b",Pattern.CASE_INSENSITIVE);
+            Pattern versionPattern = Pattern.compile("database\\b\\s+\\bversion",Pattern.CASE_INSENSITIVE);
+            Matcher tableMatcher,indexMatcher,viewMatcher,triggerMatcher,versionMatcher;
             for (String refContent : refContents) {
-                if (refContent.contains("CREATE TABLE")) {
+                tableMatcher = tablePattern.matcher(refContent);
+                indexMatcher = indexPattern.matcher(refContent);
+                viewMatcher = viewPattern.matcher(refContent);
+                triggerMatcher = triggerPattern.matcher(refContent);
+                versionMatcher = versionPattern.matcher(refContent);
+                if (tableMatcher.lookingAt()) {
                     CassandraTable refTable = new CassandraTable();
                     refTable.setName(refContent);
                     refTable.setColumns(refContent);
                     refTables.add(refTable);
-                } else if (refContent.contains("CREATE INDEX") || refContent.contains("CREATE CUSTOM INDEX")) {
+                } else if (indexMatcher.lookingAt()) {
                     CassandraIndex refIndex = new CassandraIndex();
                     refIndex.setName(refContent);
                     refIndex.setTableName(refContent);
                     refIndex.setIdentifier(refContent);
                     refIndexes.add(refIndex);
-                } else if (refContent.contains("CREATE MATERALIZED VIEW")) {
+                } else if (viewMatcher.lookingAt()) {
                     CassandraView refView = new CassandraView();
                     refView.setName(refContent);
                     refView.setStatement(refContent);
                     refView.setPrimaryKey(refContent);
                     refViews.add(refView);
-                } else if (refContent.contains("CREATE TRIGGER")) {
+                } else if (triggerMatcher.lookingAt()) {
                     CassandraTrigger refTrigger = new CassandraTrigger();
                     refTrigger.setName(refContent);
                     refTrigger.setTable(refContent);
                     refTrigger.setLogicFile(refContent);
                     refTriggers.add(refTrigger);
-                } else if (refContent.contains("Database version")){
+                } else if (versionMatcher.find()){
                     refVersion = refContent.substring(refContent.indexOf(": "), refContent.indexOf(";")).replace(':', ' ').trim();
                 }
             }
@@ -70,34 +84,39 @@ public class CassandraAnalyser {
             compViews = new ArrayList<>();
             compTriggers = new ArrayList<>();
             for (String compContent : compContents) {
-                if (compContent.contains("CREATE TABLE")) {
+                tableMatcher = tablePattern.matcher(compContent);
+                indexMatcher = indexPattern.matcher(compContent);
+                viewMatcher = viewPattern.matcher(compContent);
+                triggerMatcher = triggerPattern.matcher(compContent);
+                versionMatcher = versionPattern.matcher(compContent);
+                if (tableMatcher.lookingAt()) {
                     CassandraTable compTable = new CassandraTable();
                     compTable.setName(compContent);
                     compTable.setColumns(compContent);
                     compTables.add(compTable);
-                } else if (compContent.contains("CREATE INDEX") || compContent.contains("CREATE CUSTOM INDEX")) {
+                } else if (indexMatcher.lookingAt()) {
                     CassandraIndex compIndex = new CassandraIndex();
                     compIndex.setName(compContent);
                     compIndex.setTableName(compContent);
                     compIndex.setIdentifier(compContent);
                     compIndexes.add(compIndex);
-                } else if (compContent.contains("CREATE MATERALIZED VIEW")) {
+                } else if (viewMatcher.lookingAt()) {
                     CassandraView compView = new CassandraView();
                     compView.setName(compContent);
                     compView.setStatement(compContent);
                     compView.setPrimaryKey(compContent);
                     compViews.add(compView);
-                } else if (compContent.contains("CREATE TRIGGER")) {
+                } else if (triggerMatcher.lookingAt()) {
                     CassandraTrigger compTrigger = new CassandraTrigger();
                     compTrigger.setName(compContent);
                     compTrigger.setTable(compContent);
                     compTrigger.setLogicFile(compContent);
                     compTriggers.add(compTrigger);
-                } else if (compContent.contains("Database version")){
-                    compVersion = compContent.substring(compContent.indexOf(": "), compContent.indexOf(";")).replace(':', ' ').trim();
+                } else if (versionMatcher.find()){
+                    compVersion = compContent.substring(compContent.indexOf(":"), compContent.indexOf(";")).replace(':', ' ').trim();
                 }
             }
-            if(refVersion.equals(compVersion)){
+            if(refVersion.equals(compVersion)&&!(refVersion.equals(""))){
                 System.out.println("Obie bazy są w wersji "+refVersion);
             } else {
                 System.out.println("Wersja bazy referenycjnej: "+refVersion);
@@ -144,21 +163,21 @@ public class CassandraAnalyser {
                 }
             }
         }
-        System.out.print("Zmienione kolumny: ");
+        System.out.print("Zmienione kolumny w tabeli \""+comp.name+"\" : ");
         if(changed.isEmpty()){
             System.out.println("BRAK");
         } else {
             for(int h=0;h<changed.size();h++)
                 System.out.println("\n\t"+changed.get(h));
         }
-        System.out.print("Brakujące kolumny: ");
+        System.out.print("Brakujące kolumny w tabeli \""+comp.name+"\" : ");
         if(missing.isEmpty()){
             System.out.println("BRAK");
         } else {
             for(int m=0;m<missing.size();m++)
                 System.out.println("\n\t"+missing.get(m));
         }
-        System.out.print("Niespodziewane kolumny: ");
+        System.out.print("Niespodziewane kolumny w tabeli \""+comp.name+"\" : ");
         if(unexcepted.isEmpty()){
             System.out.println("BRAK");
         } else {

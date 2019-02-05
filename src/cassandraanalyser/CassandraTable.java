@@ -41,8 +41,10 @@ public class CassandraTable {
     protected List<CassandraColumn> columns;
 
     void setName(String input){
-        String[] inputSplit = input.split(" ");
-        name = inputSplit[2];
+        Pattern tablePattern = Pattern.compile("\\bCREATE\\b\\s+\\bTABLE\\b",Pattern.CASE_INSENSITIVE);
+        String output = tablePattern.matcher(input).replaceAll("");
+        output = output.substring(0,output.indexOf("(")).trim();
+        name = output;
     }
 
     void setColumns(String input){

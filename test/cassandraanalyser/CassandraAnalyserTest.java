@@ -56,7 +56,7 @@ public class CassandraAnalyserTest {
                 + "\n"
                 + "CREATE CUSTOM INDEX index1 ON table1 (moviename);\n"
                 + "CREATE INDEX index2 ON table2 (ticketPrice);";
-        args[1] = "--Database version: 3.11;\n"
+        /*args[1] = "--Database version: 3.11;\n"
                 + "\n"
                 + "CREATE TABLE table1 (\n"
                 + "moviename text PRIMARYKEY,\n"
@@ -68,7 +68,20 @@ public class CassandraAnalyserTest {
                 + "highScore int);\n"
                 + "\n"
                 + "CREATE CUSTOM INDEX index1 ON table1 (rentID);\n"
-                + "CREATE INDEX ON table3 (keys(highScore));";
+                + "CREATE INDEX ON table3 (keys(highScore));";*/
+        args[1] = "--Database version: 3.0;\n"
+                + "\n"
+                + "CREATE    TABLE table2 (\n"
+                + "uid int PRIMARYKEY,\n"
+                + "password text);\n"
+                + "\n"
+                + "CREATE TABLE table1 (\n"
+                + "moviename text PRIMARYKEY,\n"
+                + "ticketPrice float,\n"
+                + "rentID int);\n"
+                + "\n"
+                + "CREATE CUSTOM INDEX index1 ON table1 (moviename);\n"
+                + "CREATE INDEX index2 ON table2 (ticketPrice);";
         CassandraAnalyser.main(args);
     }
     

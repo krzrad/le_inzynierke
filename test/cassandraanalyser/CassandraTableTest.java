@@ -6,10 +6,8 @@
 package cassandraanalyser;
 
 import cassandraanalyser.CassandraTable.CassandraColumn;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
