@@ -5,6 +5,9 @@
  */
 package cassandraanalyser;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -16,6 +19,7 @@ import java.util.regex.Pattern;
  */
 public class CassandraAnalyser {
 
+    private static final List<String> ALTERS = new ArrayList<>();
     /**
      * @param args the command line arguments
      */
@@ -26,7 +30,13 @@ public class CassandraAnalyser {
         compVersion = "";
         if(args==null||args.length<2){
             System.out.println("Zbyt mała ilość argumentów");
+        } else if(args.length==3&&!(args[2].equals("-d"))) { 
+            System.out.println("Niepoprawny argument "+args[2]);
         } else {
+            boolean passiveMode = false;
+            if(args.length==3&&(args[2].equals("-d"))){
+                passiveMode = true;
+            }
             String ref = prepareSnapshot(args[0]);
             String comp = prepareSnapshot(args[1]);
             String[] refContents = ref.split("\n");
@@ -126,6 +136,32 @@ public class CassandraAnalyser {
             compareIndexes(refIndexes,compIndexes);
             compareViews(refViews,compViews);
             compareTriggers(refTriggers,compTriggers);
+            if(!passiveMode){
+                List<String> altersToSave = new ArrayList<>();
+                altersToSave.add("--alters to reference database;");
+                for(int a=0;a<ALTERS.size();a++){
+                    altersToSave.add(ALTERS.get(a));
+                }
+                BufferedWriter writer = null;
+                try {
+                    String saveFileName = "alters.cql";
+                    File saveFile = new File(saveFileName);
+                    System.out.println("Zapisywanie zmian do pliku "+saveFile.getCanonicalPath());
+                    writer = new BufferedWriter(new FileWriter(saveFile));
+                    if(!ALTERS.isEmpty())
+                    for(int i=0;i<altersToSave.size();i++){
+                        writer.write(altersToSave.get(i)+"\n");
+                    }
+                } catch (Exception e) {
+                    System.out.println(e.getLocalizedMessage());
+                } finally {
+                    try {
+                        writer.close();
+                    } catch (Exception e) {
+                        System.out.println(e.getLocalizedMessage());
+                    }
+                }
+            }
         } 
     }
     
@@ -137,8 +173,11 @@ public class CassandraAnalyser {
             for(int b=0;b<comp.columns.size();b++){
                 if(ref.columns.get(a).name.equals(comp.columns.get(b).name)){
                     fine.add(comp.columns.get(b).name);
-                    if(!(ref.columns.get(a).type.equals(comp.columns.get(b).type)))
+                    if(!(ref.columns.get(a).type.equals(comp.columns.get(b).type))){
                         changed.add(ref.name+"."+ref.columns.get(a).name+"\n\t\t typ zmieniony z "+ref.columns.get(a).type+" na "+comp.columns.get(b).type);
+                        ALTERS.add("ALTER TABLE "+ref.name+" ALTER "
+                                +ref.columns.get(a).name+" TYPE "+comp.columns.get(b).type+";");
+                    }
                     b=comp.columns.size();
                 }
             }
@@ -150,6 +189,8 @@ public class CassandraAnalyser {
                     c=fine.size();
                 } else if (c==fine.size()-1){
                     missing.add(ref.name+"."+ref.columns.get(a).name);
+                    ALTERS.add("ALTER TABLE "+ref.name+" DROP "
+                                +ref.columns.get(a).name+";");
                 }
             }
         }
@@ -160,6 +201,8 @@ public class CassandraAnalyser {
                     c=fine.size();
                 } else if (c==fine.size()-1){
                     unexcepted.add(comp.name+"."+comp.columns.get(b).name);
+                    ALTERS.add("ALTER TABLE "+ref.name+" ADD ("
+                                +comp.columns.get(b).name+" "+comp.columns.get(b).type+");");
                 }
             }
         }
@@ -204,6 +247,7 @@ public class CassandraAnalyser {
                     c=compTables.size();
                 } else if (c==compTables.size()-1) {
                     missing.add(refTables.get(r));
+                    //alters.add(); czy dodać jeszcze instrukcje zrzucania tabeli?
                 }
             }
         }
@@ -266,6 +310,7 @@ public class CassandraAnalyser {
             if(!(otherFine.get(f).tableName.equals(fine.get(f).tableName))){
                 changed.add(otherFine.get(f).name+": nazwa tabeli zmieniona z "+otherFine.get(f).tableName+
                         " na "+fine.get(f).tableName);
+                
             }
             if(!(otherFine.get(f).identifier.equals(fine.get(f).identifier))){
                 changed.add(otherFine.get(f).name+": identyfikator zmieniony z "+otherFine.get(f).identifier+
