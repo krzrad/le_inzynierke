@@ -45,7 +45,7 @@ public class CassandraTableTest {
      */
     @Test
     public void testSetName() {
-        String input = "CREATE TABLE table1 (a text PRIMARYKEY,b int,c float);";
+        String input = "CREATE TABLE table1 (a text PRIMARY KEY,b int,c float);";
         CassandraTable instance = new CassandraTable();
         instance.setName(input);
         assertEquals("nazwa tabeli źle ustawiona","table1", instance.name);
@@ -56,14 +56,14 @@ public class CassandraTableTest {
      */
     @Test
     public void testSetColumns() {
-        String input = "CREATE TABLE table1 (a text PRIMARYKEY,b int,c float);";
+        String input = "CREATE TABLE table1 (a text PRIMARY KEY,b int,c float);";
         CassandraTable instance = new CassandraTable();
         instance.setColumns(input);
         CassandraColumn a,b,c;
         a = new CassandraColumn();
         a.name="a";
         a.type="text";
-        a.properties="PRIMARYKEY";
+        a.properties="PRIMARY KEY";
         b = new CassandraColumn();
         b.name="b";
         b.type="int";

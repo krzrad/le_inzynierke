@@ -6,6 +6,7 @@
 package cassandraanalyser;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -16,10 +17,16 @@ import java.util.regex.Pattern;
  */
 public class CassandraTable {
     protected String name;
+    protected boolean hasPrimaryKey = false; 
 
     public CassandraTable() {
         this.columns = new ArrayList<>();
     }
+
+    private void lookForPrimaryKey(String input) {
+        //System.out.println("wejście: "+input);
+    }
+    
     protected static class CassandraColumn{
         protected String name,type,properties;
         void setName(String input){
@@ -33,7 +40,7 @@ public class CassandraTable {
         void setProperties(String input){
             String[] inputSplit = input.split(" ");
             if(inputSplit.length>=3)
-                properties = inputSplit[2];
+                properties = input.substring(input.indexOf(inputSplit[2]));
             else properties = null;
         };
     };
@@ -51,13 +58,20 @@ public class CassandraTable {
         Pattern p = Pattern.compile("\\((.*?)\\)");
         Matcher m = p.matcher(input);
         while(m.find()) {
-            String[] splitColumns = m.group(1).split(",");
-            for (String splitColumn : splitColumns) {
+            List<String> splitThings = new ArrayList<>();
+            splitThings.addAll(Arrays.asList(m.group(1).split(",")));
+            for (int i=0;i<splitThings.size();i++) {
+                String splitColumn = splitThings.get(i);
                 CassandraColumn column = new CassandraColumn();
                 column.setName(splitColumn);
                 column.setType(splitColumn);
                 column.setProperties(splitColumn);
                 columns.add(column);
+                if(column.properties!=null&&column.properties.equals("PRIMARY KEY"))
+                    hasPrimaryKey = true;
+            }
+            if(!hasPrimaryKey){
+                lookForPrimaryKey(input);
             }
         }
     }

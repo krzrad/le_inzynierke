@@ -72,6 +72,8 @@ public class CassandraAnalyser {
                     refIndex.setName(refContent);
                     refIndex.setTableName(refContent);
                     refIndex.setIdentifier(refContent);
+                    if(refIndex.lookForIndexingLib)
+                        refIndex.setIndexingLib(refContent);
                     refIndexes.add(refIndex);
                 } else if (viewMatcher.lookingAt()) {
                     CassandraView refView = new CassandraView();
@@ -109,6 +111,8 @@ public class CassandraAnalyser {
                     compIndex.setName(compContent);
                     compIndex.setTableName(compContent);
                     compIndex.setIdentifier(compContent);
+                    if(compIndex.lookForIndexingLib)
+                        compIndex.setIndexingLib(compContent);
                     compIndexes.add(compIndex);
                 } else if (viewMatcher.lookingAt()) {
                     CassandraView compView = new CassandraView();
@@ -315,6 +319,16 @@ public class CassandraAnalyser {
             if(!(otherFine.get(f).identifier.equals(fine.get(f).identifier))){
                 changed.add(otherFine.get(f).name+": identyfikator zmieniony z "+otherFine.get(f).identifier+
                         " na "+fine.get(f).identifier);
+            }
+            if(fine.get(f).indexingLib!=null&&otherFine.get(f).indexingLib!=null){
+                if(!(otherFine.get(f).indexingLib.equals(fine.get(f).indexingLib))){
+                changed.add(otherFine.get(f).name+": bibl. indeksująca zmieniona z "+otherFine.get(f).indexingLib+
+                        " na "+fine.get(f).indexingLib);
+                }
+            } else if (fine.get(f).indexingLib==null&&otherFine.get(f).indexingLib!=null) {
+                changed.add(otherFine.get(f).name+": brak bibl. indeksującej "+otherFine.get(f).indexingLib);
+            } else if (fine.get(f).indexingLib!=null&&otherFine.get(f).indexingLib==null) {
+                changed.add(otherFine.get(f).name+": użyto bibl. indeksującej "+fine.get(f).indexingLib);
             }
         }
         System.out.print("Brakujące indeksy: ");

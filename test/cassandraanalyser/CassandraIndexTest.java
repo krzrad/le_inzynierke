@@ -84,5 +84,17 @@ public class CassandraIndexTest {
         instance.setIdentifier(input);
         assertEquals("identyfikator został źle ustawiony",expResult,instance.identifier);
     }
+
+    /**
+     * Test of setIndexingLib method, of class CassandraIndex.
+     */
+    @Test
+    public void testSetIndexingLib() {
+        String input = "index1 ON table1 (sth) USING some.java.library";
+        String expResult = "some.java.library";
+        CassandraIndex instance = new CassandraIndex();
+        instance.setIndexingLib(input);
+        assertEquals("bibl. indeksująca została źle ustawiona",expResult,instance.indexingLib);
+    }
     
 }
