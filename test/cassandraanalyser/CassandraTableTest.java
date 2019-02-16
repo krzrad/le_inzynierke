@@ -56,7 +56,7 @@ public class CassandraTableTest {
      */
     @Test
     public void testSetColumns() {
-        String input = "CREATE TABLE table1 (a text PRIMARY KEY,b int,c float);";
+        String input = "CREATE TABLE table1 (a text PRIMARY KEY,b map <int, text>,c tuple <int, int, int> );";
         CassandraTable instance = new CassandraTable();
         instance.setColumns(input);
         CassandraColumn a,b,c;

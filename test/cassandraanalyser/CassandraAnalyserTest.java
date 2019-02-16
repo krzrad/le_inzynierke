@@ -49,7 +49,7 @@ public class CassandraAnalyserTest {
                 + "moviename text,\n"
                 + "ticketPrice float,\n"
                 + "rentID int,\n"
-                + "PRIMARY KEY(moviename, rentID));\n"
+                + "PRIMARY KEY (moviename, rentID));\n"
                 + "\n"
                 + "CREATE TABLE table2 (\n"
                 + "uid int PRIMARY KEY,\n"

@@ -40,7 +40,6 @@ public class CassandraIndex {
     };
     void setIdentifier(String input){
         String preparedInput = prepare(input);
-        //String[] splitInput = preparedInput.split(" ");
         Pattern p = Pattern.compile("\\((.*?)\\)");
         Matcher m = p.matcher(preparedInput);
         while(m.find()){
