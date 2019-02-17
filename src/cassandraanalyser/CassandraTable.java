@@ -36,12 +36,13 @@ public class CassandraTable {
                 for(int j=0;j<splitPKColumns.size();j++){
                     String splitPKColumn = splitPKColumns.get(j);
                     for (int i=0;i<columns.size();i++){
-                        if (splitPKColumn.trim().equals(columns.get(i).name))
+                        if (splitPKColumn.trim().equals(columns.get(i).name)){
                             columns.get(i).properties = "PRIMARY KEY";
-                        if (j==0)
-                            columns.get(i).properties = columns.get(i).properties.concat(" PARTITION KEY");
-                        else
-                            columns.get(i).properties = columns.get(i).properties.concat(" CLUSTERING KEY");
+                            if (j==0)
+                                columns.get(i).properties = columns.get(i).properties.concat(" PARTITION KEY");
+                            else
+                                columns.get(i).properties = columns.get(i).properties.concat(" CLUSTERING KEY");
+                        }
                     } 
                 }
             }

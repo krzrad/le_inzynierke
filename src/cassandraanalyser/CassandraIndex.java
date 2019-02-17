@@ -21,7 +21,7 @@ public class CassandraIndex {
         if(preparedInput.contains("CUSTOM")){
             lookForIndexingLib = true;
             preparedInput = preparedInput.replace("CUSTOM","").trim();
-        } else lookForIndexingLib = false;
+        }
         return preparedInput;
     };
     void setName(String input){

@@ -8,6 +8,8 @@ package cassandraanalyser;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -30,15 +32,29 @@ public class CassandraAnalyser {
         compVersion = "";
         if(args==null||args.length<2){
             System.out.println("Zbyt mała ilość argumentów");
-        } else if(args.length==3&&!(args[2].equals("-d"))) { 
+        } else if(args.length==3&&!(args[2].equals("-d")||args[2].equals("--diff"))) { 
             System.out.println("Niepoprawny argument "+args[2]);
         } else {
             boolean passiveMode = false;
             if(args.length==3&&(args[2].equals("-d"))){
                 passiveMode = true;
             }
-            String ref = prepareSnapshot(args[0]);
-            String comp = prepareSnapshot(args[1]);
+            String refUnprepared = "";
+            String compUnprepared = "";
+            try {
+                List<String> refFile = Files.readAllLines(Paths.get(args[0]));
+                for(int a=0;a<refFile.size();a++){
+                    refUnprepared = refUnprepared.concat(refFile.get(a)+"\n");
+                }
+                List<String> compFile = Files.readAllLines(Paths.get(args[1]));
+                for(int a=0;a<compFile.size();a++){
+                    compUnprepared = compUnprepared.concat(compFile.get(a)+"\n");
+                }
+            } catch (Exception e) {
+                System.out.println(e.getLocalizedMessage());
+            }
+            String ref = prepareSnapshot(refUnprepared);
+            String comp = prepareSnapshot(compUnprepared);
             String[] refContents = ref.split("\n");
             String[] compContents = comp.split("\n");
             List<CassandraTable> refTables,compTables;
@@ -146,25 +162,28 @@ public class CassandraAnalyser {
                 for(int a=0;a<ALTERS.size();a++){
                     altersToSave.add(ALTERS.get(a));
                 }
-                BufferedWriter writer = null;
-                try {
-                    String saveFileName = "alters.cql";
-                    File saveFile = new File(saveFileName);
-                    System.out.println("Zapisywanie zmian do pliku "+saveFile.getCanonicalPath());
-                    writer = new BufferedWriter(new FileWriter(saveFile));
-                    if(!ALTERS.isEmpty())
-                    for(int i=0;i<altersToSave.size();i++){
-                        writer.write(altersToSave.get(i)+"\n");
-                    }
-                } catch (Exception e) {
-                    System.out.println(e.getLocalizedMessage());
-                } finally {
+                if(!ALTERS.isEmpty()){
+                    BufferedWriter writer = null;
                     try {
-                        writer.close();
+                        String saveFileName = "alters.cql";
+                        File saveFile = new File(saveFileName);
+                        System.out.println("Zapisywanie zmian do pliku "+saveFile.getCanonicalPath());
+                        writer = new BufferedWriter(new FileWriter(saveFile));
+
+                        for(int i=0;i<altersToSave.size();i++){
+                            System.out.println(altersToSave.get(i));
+                            writer.write(altersToSave.get(i)+"\n");
+                        }
                     } catch (Exception e) {
                         System.out.println(e.getLocalizedMessage());
+                    } finally {
+                        try {
+                            writer.close();
+                        } catch (Exception e) {
+                            System.out.println(e.getLocalizedMessage());
+                        }
                     }
-                }
+                } else System.out.println("Brak możliwości wygenerowania ALTER TABLE :(");
             }
         } 
     }
@@ -200,6 +219,11 @@ public class CassandraAnalyser {
         }
         unexcepted = new ArrayList<>();
         for(int b=0;b<comp.columns.size();b++){
+            if(fine.isEmpty()){
+                unexcepted.add(comp.name+"."+comp.columns.get(b).name);
+                ALTERS.add("ALTER TABLE "+ref.name+" ADD ("
+                            +comp.columns.get(b).name+" "+comp.columns.get(b).type+");");
+            }
             for(int c=0;c<fine.size();c++){
                 if(fine.get(c).equals(comp.columns.get(b).name)){
                     c=fine.size();
@@ -257,6 +281,8 @@ public class CassandraAnalyser {
         }
         unexcepted = new ArrayList<>();
         for(int c=0;c<compTables.size();c++){
+            if(fine.isEmpty())
+                unexcepted.add(compTables.get(c));
             for(int f=0;f<fine.size();f++){
                 if(compTables.get(c).name.equals(fine.get(f).name)){
                     f=fine.size();
@@ -301,6 +327,8 @@ public class CassandraAnalyser {
         }
         unexcepted = new ArrayList<>();
         for(int c=0;c<compIndexes.size();c++){
+            if(fine.isEmpty())
+                unexcepted.add(compIndexes.get(c));
             for(int f=0;f<fine.size();f++){
                 if(compIndexes.get(c).name.equals(fine.get(f).name)){
                     f=fine.size();
@@ -371,6 +399,8 @@ public class CassandraAnalyser {
         }
         unexcepted = new ArrayList<>();
         for(int c=0;c<compViews.size();c++){
+            if(fine.isEmpty())
+                unexcepted.add(compViews.get(c));
             for(int f=0;f<fine.size();f++){
                 if(compViews.get(c).name.equals(fine.get(f).name)){
                     f=fine.size();
@@ -430,6 +460,8 @@ public class CassandraAnalyser {
         }
         unexcepted = new ArrayList<>();
         for(int c=0;c<compTriggers.size();c++){
+            if(fine.isEmpty())
+                unexcepted.add(compTriggers.get(c));
             for(int f=0;f<fine.size();f++){
                 if(compTriggers.get(c).name.equals(fine.get(f).name)){
                     f=fine.size();
