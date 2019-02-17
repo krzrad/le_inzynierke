@@ -22,12 +22,25 @@ import java.util.regex.Pattern;
 public class CassandraAnalyser {
 
     private static final List<String> ALTERS = new ArrayList<>();
+    private static String refUnprepared = "";
+    private static String compUnprepared = "";
+    private static String refVersion,compVersion;
+    private static List<CassandraTable> refTables,compTables;
+    private static List<CassandraIndex> refIndexes,compIndexes;
+    private static List<CassandraView> refViews,compViews;
+    private static List<CassandraTrigger> refTriggers,compTriggers;
+    private static final Pattern TABLEPATTERN = Pattern.compile("\\bCREATE\\b\\s+\\bTABLE\\b",Pattern.CASE_INSENSITIVE);
+    private static final Pattern INDEXPATTERN = Pattern.compile("\\bCREATE\\b\\s+\\bINDEX\\b|"
+            + "\\bCREATE\\b\\s+\\bCUSTOM\\b\\s+\\bINDEX\\b",Pattern.CASE_INSENSITIVE);
+    private static final Pattern VIEWPATTERN = Pattern.compile("\\bCREATE\\b\\s+\\bMATERIALIZED\\b\\s+\\bVIEW\\b",Pattern.CASE_INSENSITIVE);
+    private static final Pattern TRIGGERPATTERN = Pattern.compile("\\bCREATE\\b\\s+\\bTRIGGER\\b",Pattern.CASE_INSENSITIVE);
+    private static final Pattern VERSIONPATTERN = Pattern.compile("database\\b\\s+\\bversion",Pattern.CASE_INSENSITIVE);
+    private static Matcher tableMatcher,indexMatcher,viewMatcher,triggerMatcher,versionMatcher;
     /**
      * @param args the command line arguments
      */
       
     public static void main(String[] args) {
-        String refVersion,compVersion;
         refVersion = "";
         compVersion = "";
         if(args==null||args.length<2){
@@ -39,113 +52,13 @@ public class CassandraAnalyser {
             if(args.length==3&&(args[2].equals("-d"))){
                 passiveMode = true;
             }
-            String refUnprepared = "";
-            String compUnprepared = "";
-            try {
-                List<String> refFile = Files.readAllLines(Paths.get(args[0]));
-                for(int a=0;a<refFile.size();a++){
-                    refUnprepared = refUnprepared.concat(refFile.get(a)+"\n");
-                }
-                List<String> compFile = Files.readAllLines(Paths.get(args[1]));
-                for(int a=0;a<compFile.size();a++){
-                    compUnprepared = compUnprepared.concat(compFile.get(a)+"\n");
-                }
-            } catch (Exception e) {
-                System.out.println(e.getLocalizedMessage());
-            }
+            loadFiles(args[0],args[1]);
             String ref = prepareSnapshot(refUnprepared);
             String comp = prepareSnapshot(compUnprepared);
             String[] refContents = ref.split("\n");
             String[] compContents = comp.split("\n");
-            List<CassandraTable> refTables,compTables;
-            List<CassandraIndex> refIndexes,compIndexes;
-            List<CassandraView> refViews,compViews;
-            List<CassandraTrigger> refTriggers,compTriggers;
-            refTables = new ArrayList<>();
-            refIndexes = new ArrayList<>();
-            refViews = new ArrayList<>();
-            refTriggers = new ArrayList<>();
-            Pattern tablePattern = Pattern.compile("\\bCREATE\\b\\s+\\bTABLE\\b",Pattern.CASE_INSENSITIVE);
-            Pattern indexPattern = Pattern.compile("\\bCREATE\\b\\s+\\bINDEX\\b|"
-                    + "\\bCREATE\\b\\s+\\bCUSTOM\\b\\s+\\bINDEX\\b",Pattern.CASE_INSENSITIVE);
-            Pattern viewPattern = Pattern.compile("\\bCREATE\\b\\s+\\bMATERIALIZED\\b\\s+\\bVIEW\\b",Pattern.CASE_INSENSITIVE);
-            Pattern triggerPattern = Pattern.compile("\\bCREATE\\b\\s+\\bTRIGGER\\b",Pattern.CASE_INSENSITIVE);
-            Pattern versionPattern = Pattern.compile("database\\b\\s+\\bversion",Pattern.CASE_INSENSITIVE);
-            Matcher tableMatcher,indexMatcher,viewMatcher,triggerMatcher,versionMatcher;
-            for (String refContent : refContents) {
-                tableMatcher = tablePattern.matcher(refContent);
-                indexMatcher = indexPattern.matcher(refContent);
-                viewMatcher = viewPattern.matcher(refContent);
-                triggerMatcher = triggerPattern.matcher(refContent);
-                versionMatcher = versionPattern.matcher(refContent);
-                if (tableMatcher.lookingAt()) {
-                    CassandraTable refTable = new CassandraTable();
-                    refTable.setName(refContent);
-                    refTable.setColumns(refContent);
-                    refTables.add(refTable);
-                } else if (indexMatcher.lookingAt()) {
-                    CassandraIndex refIndex = new CassandraIndex();
-                    refIndex.setName(refContent);
-                    refIndex.setTableName(refContent);
-                    refIndex.setIdentifier(refContent);
-                    if(refIndex.lookForIndexingLib)
-                        refIndex.setIndexingLib(refContent);
-                    refIndexes.add(refIndex);
-                } else if (viewMatcher.lookingAt()) {
-                    CassandraView refView = new CassandraView();
-                    refView.setName(refContent);
-                    refView.setStatement(refContent);
-                    refView.setPrimaryKey(refContent);
-                    refViews.add(refView);
-                } else if (triggerMatcher.lookingAt()) {
-                    CassandraTrigger refTrigger = new CassandraTrigger();
-                    refTrigger.setName(refContent);
-                    refTrigger.setTable(refContent);
-                    refTrigger.setLogicFile(refContent);
-                    refTriggers.add(refTrigger);
-                } else if (versionMatcher.find()){
-                    refVersion = refContent.substring(refContent.indexOf(": "), refContent.indexOf(";")).replace(':', ' ').trim();
-                }
-            }
-            compTables = new ArrayList<>();
-            compIndexes = new ArrayList<>();
-            compViews = new ArrayList<>();
-            compTriggers = new ArrayList<>();
-            for (String compContent : compContents) {
-                tableMatcher = tablePattern.matcher(compContent);
-                indexMatcher = indexPattern.matcher(compContent);
-                viewMatcher = viewPattern.matcher(compContent);
-                triggerMatcher = triggerPattern.matcher(compContent);
-                versionMatcher = versionPattern.matcher(compContent);
-                if (tableMatcher.lookingAt()) {
-                    CassandraTable compTable = new CassandraTable();
-                    compTable.setName(compContent);
-                    compTable.setColumns(compContent);
-                    compTables.add(compTable);
-                } else if (indexMatcher.lookingAt()) {
-                    CassandraIndex compIndex = new CassandraIndex();
-                    compIndex.setName(compContent);
-                    compIndex.setTableName(compContent);
-                    compIndex.setIdentifier(compContent);
-                    if(compIndex.lookForIndexingLib)
-                        compIndex.setIndexingLib(compContent);
-                    compIndexes.add(compIndex);
-                } else if (viewMatcher.lookingAt()) {
-                    CassandraView compView = new CassandraView();
-                    compView.setName(compContent);
-                    compView.setStatement(compContent);
-                    compView.setPrimaryKey(compContent);
-                    compViews.add(compView);
-                } else if (triggerMatcher.lookingAt()) {
-                    CassandraTrigger compTrigger = new CassandraTrigger();
-                    compTrigger.setName(compContent);
-                    compTrigger.setTable(compContent);
-                    compTrigger.setLogicFile(compContent);
-                    compTriggers.add(compTrigger);
-                } else if (versionMatcher.find()){
-                    compVersion = compContent.substring(compContent.indexOf(":"), compContent.indexOf(";")).replace(':', ' ').trim();
-                }
-            }
+            loadReferenceTable(refContents);
+            loadComparisionTable(compContents);
             if(refVersion.equals(compVersion)&&!(refVersion.equals(""))){
                 System.out.println("Obie bazy są w wersji "+refVersion);
             } else {
@@ -157,33 +70,7 @@ public class CassandraAnalyser {
             compareViews(refViews,compViews);
             compareTriggers(refTriggers,compTriggers);
             if(!passiveMode){
-                List<String> altersToSave = new ArrayList<>();
-                altersToSave.add("--alters to reference database;");
-                for(int a=0;a<ALTERS.size();a++){
-                    altersToSave.add(ALTERS.get(a));
-                }
-                if(!ALTERS.isEmpty()){
-                    BufferedWriter writer = null;
-                    try {
-                        String saveFileName = "alters.cql";
-                        File saveFile = new File(saveFileName);
-                        System.out.println("Zapisywanie zmian do pliku "+saveFile.getCanonicalPath());
-                        writer = new BufferedWriter(new FileWriter(saveFile));
-
-                        for(int i=0;i<altersToSave.size();i++){
-                            System.out.println(altersToSave.get(i));
-                            writer.write(altersToSave.get(i)+"\n");
-                        }
-                    } catch (Exception e) {
-                        System.out.println(e.getLocalizedMessage());
-                    } finally {
-                        try {
-                            writer.close();
-                        } catch (Exception e) {
-                            System.out.println(e.getLocalizedMessage());
-                        }
-                    }
-                } else System.out.println("Brak możliwości wygenerowania ALTER TABLE :(");
+                saveAlters();
             }
         } 
     }
@@ -501,5 +388,134 @@ public class CassandraAnalyser {
         } else for (int c=0;c<changed.size();c++){
             System.out.print("\n\t"+changed.get(c));
         }
+    }
+
+    private static void loadFiles(String ref, String comp) {
+        try {
+            List<String> refFile = Files.readAllLines(Paths.get(ref));
+            for(int a=0;a<refFile.size();a++){
+                refUnprepared = refUnprepared.concat(refFile.get(a)+"\n");
+            }
+            List<String> compFile = Files.readAllLines(Paths.get(comp));
+            for(int a=0;a<compFile.size();a++){
+                compUnprepared = compUnprepared.concat(compFile.get(a)+"\n");
+            }
+        } catch (Exception e) {
+            System.out.println(e.getLocalizedMessage());
+        }
+    }
+
+    private static void loadReferenceTable(String[] refContents) {
+        refTables = new ArrayList<>();
+        refIndexes = new ArrayList<>();
+        refViews = new ArrayList<>();
+        refTriggers = new ArrayList<>();
+        for (String refContent : refContents) {
+            tableMatcher = TABLEPATTERN.matcher(refContent);
+            indexMatcher = INDEXPATTERN.matcher(refContent);
+            viewMatcher = VIEWPATTERN.matcher(refContent);
+            triggerMatcher = TRIGGERPATTERN.matcher(refContent);
+            versionMatcher = VERSIONPATTERN.matcher(refContent);
+            if (tableMatcher.lookingAt()) {
+                CassandraTable refTable = new CassandraTable();
+                refTable.setName(refContent);
+                refTable.setColumns(refContent);
+                refTables.add(refTable);
+            } else if (indexMatcher.lookingAt()) {
+                CassandraIndex refIndex = new CassandraIndex();
+                refIndex.setName(refContent);
+                refIndex.setTableName(refContent);
+                refIndex.setIdentifier(refContent);
+                if(refIndex.lookForIndexingLib)
+                    refIndex.setIndexingLib(refContent);
+                refIndexes.add(refIndex);
+            } else if (viewMatcher.lookingAt()) {
+                CassandraView refView = new CassandraView();
+                refView.setName(refContent);
+                refView.setStatement(refContent);
+                refView.setPrimaryKey(refContent);
+                refViews.add(refView);
+            } else if (triggerMatcher.lookingAt()) {
+                CassandraTrigger refTrigger = new CassandraTrigger();
+                refTrigger.setName(refContent);
+                refTrigger.setTable(refContent);
+                refTrigger.setLogicFile(refContent);
+                refTriggers.add(refTrigger);
+            } else if (versionMatcher.find()){
+                refVersion = refContent.substring(refContent.indexOf(": "), refContent.indexOf(";")).replace(':', ' ').trim();
+            }
+        }
+    }
+
+    private static void loadComparisionTable(String[] compContents) {
+        compTables = new ArrayList<>();
+        compIndexes = new ArrayList<>();
+        compViews = new ArrayList<>();
+        compTriggers = new ArrayList<>();
+        for (String compContent : compContents) {
+            tableMatcher = TABLEPATTERN.matcher(compContent);
+            indexMatcher = INDEXPATTERN.matcher(compContent);
+            viewMatcher = VIEWPATTERN.matcher(compContent);
+            triggerMatcher = TRIGGERPATTERN.matcher(compContent);
+            versionMatcher = VERSIONPATTERN.matcher(compContent);
+            if (tableMatcher.lookingAt()) {
+                CassandraTable compTable = new CassandraTable();
+                compTable.setName(compContent);
+                compTable.setColumns(compContent);
+                compTables.add(compTable);
+            } else if (indexMatcher.lookingAt()) {
+                CassandraIndex compIndex = new CassandraIndex();
+                compIndex.setName(compContent);
+                compIndex.setTableName(compContent);
+                compIndex.setIdentifier(compContent);
+                if(compIndex.lookForIndexingLib)
+                    compIndex.setIndexingLib(compContent);
+                compIndexes.add(compIndex);
+            } else if (viewMatcher.lookingAt()) {
+                CassandraView compView = new CassandraView();
+                compView.setName(compContent);
+                compView.setStatement(compContent);
+                compView.setPrimaryKey(compContent);
+                compViews.add(compView);
+            } else if (triggerMatcher.lookingAt()) {
+                CassandraTrigger compTrigger = new CassandraTrigger();
+                compTrigger.setName(compContent);
+                compTrigger.setTable(compContent);
+                compTrigger.setLogicFile(compContent);
+                compTriggers.add(compTrigger);
+            } else if (versionMatcher.find()){
+                compVersion = compContent.substring(compContent.indexOf(":"), compContent.indexOf(";")).replace(':', ' ').trim();
+            }
+        }
+    }
+
+    private static void saveAlters() {
+        List<String> altersToSave = new ArrayList<>();
+        altersToSave.add("--alters to reference database;");
+        for(int a=0;a<ALTERS.size();a++){
+            altersToSave.add(ALTERS.get(a));
+        }
+        if(!ALTERS.isEmpty()){
+            BufferedWriter writer = null;
+            try {
+                String saveFileName = "alters.cql";
+                File saveFile = new File(saveFileName);
+                System.out.println("Zapisywanie zmian do pliku "+saveFile.getCanonicalPath());
+                writer = new BufferedWriter(new FileWriter(saveFile));
+
+                for(int i=0;i<altersToSave.size();i++){
+                    System.out.println(altersToSave.get(i));
+                    writer.write(altersToSave.get(i)+"\n");
+                }
+            } catch (Exception e) {
+                System.out.println(e.getLocalizedMessage());
+            } finally {
+                try {
+                    writer.close();
+                } catch (Exception e) {
+                    System.out.println(e.getLocalizedMessage());
+                }
+            }
+        } else System.out.println("Brak możliwości wygenerowania ALTER TABLE :(");
     }
 }
