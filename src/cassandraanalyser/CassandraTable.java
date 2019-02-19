@@ -30,7 +30,6 @@ public class CassandraTable {
             Pattern q = Pattern.compile("\\((.*)\\)");
             Matcher n = q.matcher(m.group(0));
             while(n.find()){
-                System.out.println(n.group(1));
                 List<String> splitPKColumns = new ArrayList<>();
                 splitPKColumns.addAll(Arrays.asList(n.group(1).split(",")));
                 for(int j=0;j<splitPKColumns.size();j++){

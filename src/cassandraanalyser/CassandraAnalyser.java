@@ -49,7 +49,7 @@ public class CassandraAnalyser {
             System.out.println("Niepoprawny argument "+args[2]);
         } else {
             boolean passiveMode = false;
-            if(args.length==3&&(args[2].equals("-d"))){
+            if(args.length==3&&(args[2].equals("-d")||args[2].equals("--diff"))){
                 passiveMode = true;
             }
             loadFiles(args[0],args[1]);
@@ -57,8 +57,8 @@ public class CassandraAnalyser {
             String comp = prepareSnapshot(compUnprepared);
             String[] refContents = ref.split("\n");
             String[] compContents = comp.split("\n");
-            loadReferenceTable(refContents);
-            loadComparisionTable(compContents);
+            loadReferenceSchema(refContents);
+            loadComparisionSchema(compContents);
             if(refVersion.equals(compVersion)&&!(refVersion.equals(""))){
                 System.out.println("Obie bazy są w wersji "+refVersion);
             } else {
@@ -162,7 +162,6 @@ public class CassandraAnalyser {
                     c=compTables.size();
                 } else if (c==compTables.size()-1) {
                     missing.add(refTables.get(r));
-                    //alters.add(); czy dodać jeszcze instrukcje zrzucania tabeli?
                 }
             }
         }
@@ -405,7 +404,7 @@ public class CassandraAnalyser {
         }
     }
 
-    private static void loadReferenceTable(String[] refContents) {
+    private static void loadReferenceSchema(String[] refContents) {
         refTables = new ArrayList<>();
         refIndexes = new ArrayList<>();
         refViews = new ArrayList<>();
@@ -447,7 +446,7 @@ public class CassandraAnalyser {
         }
     }
 
-    private static void loadComparisionTable(String[] compContents) {
+    private static void loadComparisionSchema(String[] compContents) {
         compTables = new ArrayList<>();
         compIndexes = new ArrayList<>();
         compViews = new ArrayList<>();
@@ -502,9 +501,7 @@ public class CassandraAnalyser {
                 File saveFile = new File(saveFileName);
                 System.out.println("Zapisywanie zmian do pliku "+saveFile.getCanonicalPath());
                 writer = new BufferedWriter(new FileWriter(saveFile));
-
                 for(int i=0;i<altersToSave.size();i++){
-                    System.out.println(altersToSave.get(i));
                     writer.write(altersToSave.get(i)+"\n");
                 }
             } catch (Exception e) {

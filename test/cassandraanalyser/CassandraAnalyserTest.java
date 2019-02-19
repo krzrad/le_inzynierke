@@ -43,46 +43,8 @@ public class CassandraAnalyserTest {
     @Test
     public void testMain() {
         String[] args = new String[2];
-        args[0] = "--Database version: 3.0;\n"
-                + "\n"
-                + "CREATE TABLE table1 (\n"
-                + "moviename text,\n"
-                + "ticketPrice float,\n"
-                + "rentID int,\n"
-                + "PRIMARY KEY (moviename, rentID));\n"
-                + "\n"
-                + "CREATE TABLE table2 (\n"
-                + "uid int PRIMARY KEY,\n"
-                + "password text);\n"
-                + "\n"
-                + "CREATE CUSTOM INDEX index1 ON table1 (moviename) USING one.external.codeinjava;\n"
-                + "CREATE INDEX index2 ON table2 (ticketPrice);";
-        args[1] = "--Database version: 3.11;\n"
-                + "\n"
-                + "CREATE TABLE table1 (\n"
-                + "moviename text PRIMARY KEY,\n"
-                + "rentID uuid,\n"
-                + "expDate text);\n"
-                + "\n"
-                + "CREATE TABLE table3 (\n"
-                + "id text PRIMARY KEY,\n"
-                + "highScore int);\n"
-                + "\n"
-                + "CREATE CUSTOM INDEX index1 ON table1 (rentID) USING other.external.codeinjava;\n"
-                + "CREATE INDEX ON table3 (keys(highScore));";
-        /*args[1] = "--Database version: 3.0;\n"
-                + "\n"
-                + "CREATE    TABLE table2 (\n"
-                + "uid int PRIMARYKEY,\n"
-                + "password text);\n"
-                + "\n"
-                + "CREATE TABLE table1 (\n"
-                + "moviename text PRIMARYKEY,\n"
-                + "ticketPrice float,\n"
-                + "rentID int);\n"
-                + "\n"
-                + "CREATE CUSTOM INDEX index1 ON table1 (moviename);\n"
-                + "CREATE INDEX index2 ON table2 (ticketPrice);";*/
+        args[0] = "/root/a.cql";
+        args[1] = "/root/b.cql";
         CassandraAnalyser.main(args);
     }
     
